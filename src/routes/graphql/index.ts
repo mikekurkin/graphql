@@ -2,6 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { graphql } from 'graphql';
 import { createGqlResponseSchema, gqlResponseSchema, schema } from './schemas.js';
 import { UUIDType } from './types/uuid.js';
+import depthLimit from 'graphql-depth-limit';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.route({

@@ -1,5 +1,14 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
+import {
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+} from 'graphql';
+import { ChangePostInput, CreatePostInput } from './inputs/post.js';
+import { ChangeProfileInput, CreateProfileInput } from './inputs/profile.js';
+import { ChangeUserInput, CreateUserInput } from './inputs/user.js';
 import { MemberTypeIdType } from './types/member-type-id.js';
 import { MemberTypeType } from './types/member-type.js';
 import { PostType } from './types/post.js';
@@ -65,6 +74,95 @@ export const schema = new GraphQLSchema({
       posts: {
         type: new GraphQLList(PostType),
         resolve: (_obj, _args, { db }) => db.post.findMany(),
+      },
+    }),
+  }),
+
+  mutation: new GraphQLObjectType({
+    name: 'Mutation',
+    fields: () => ({
+      createUser: {
+        type: UserType,
+        args: { dto: { type: new GraphQLNonNull(CreateUserInput) } },
+        resolve: async (_obj, { dto }, { db }) => await db.user.create({ data: dto }),
+      },
+      createProfile: {
+        type: ProfileType,
+        args: { dto: { type: new GraphQLNonNull(CreateProfileInput) } },
+        resolve: async (_obj, { dto }, { db }) => await db.profile.create({ data: dto }),
+      },
+      createPost: {
+        type: PostType,
+        args: { dto: { type: new GraphQLNonNull(CreatePostInput) } },
+        resolve: async (_obj, { dto }, { db }) => await db.post.create({ data: dto }),
+      },
+      changeUser: {
+        type: UserType,
+        args: {
+          id: { type: new GraphQLNonNull(UUIDType) },
+          dto: { type: new GraphQLNonNull(ChangeUserInput) },
+        },
+        resolve: async (_obj, { id, dto }, { db }) =>
+          await db.user.update({ where: { id }, data: dto }),
+      },
+      changeProfile: {
+        type: ProfileType,
+        args: {
+          id: { type: new GraphQLNonNull(UUIDType) },
+          dto: { type: new GraphQLNonNull(ChangeProfileInput) },
+        },
+        resolve: async (_obj, { id, dto }, { db }) =>
+          await db.profile.update({ where: { id }, data: dto }),
+      },
+      changePost: {
+        type: PostType,
+        args: {
+          id: { type: new GraphQLNonNull(UUIDType) },
+          dto: { type: new GraphQLNonNull(ChangePostInput) },
+        },
+        resolve: async (_obj, { id, dto }, { db }) =>
+          await db.post.update({ where: { id }, data: dto }),
+      },
+      deleteUser: {
+        type: GraphQLString,
+        args: { id: { type: new GraphQLNonNull(UUIDType) } },
+        resolve: async (_obj, { id }, { db }) =>
+          void (await db.user.delete({ where: { id } })),
+      },
+      deleteProfile: {
+        type: GraphQLString,
+        args: { id: { type: new GraphQLNonNull(UUIDType) } },
+        resolve: async (_obj, { id }, { db }) =>
+          void (await db.profile.delete({ where: { id } })),
+      },
+      deletePost: {
+        type: GraphQLString,
+        args: { id: { type: new GraphQLNonNull(UUIDType) } },
+        resolve: async (_obj, { id }, { db }) =>
+          void (await db.post.delete({ where: { id } })),
+      },
+      subscribeTo: {
+        type: UserType,
+        args: {
+          userId: { type: new GraphQLNonNull(UUIDType) },
+          authorId: { type: new GraphQLNonNull(UUIDType) },
+        },
+        resolve: async (_obj, { userId: subscriberId, authorId }, { db }) =>
+          await db.user.update({
+            where: { id: subscriberId },
+            data: { userSubscribedTo: { create: { authorId } } },
+          }),
+      },
+      unsubscribeFrom: {
+        type: GraphQLString,
+        args: {
+          userId: { type: new GraphQLNonNull(UUIDType) },
+          authorId: { type: new GraphQLNonNull(UUIDType) },
+        },
+        resolve: async (_obj, { userId: subscriberId, authorId }, { db }) =>
+          void (await db.subscribersOnAuthors.delete({
+            where: { subscriberId_authorId: { subscriberId, authorId } },
+          })),
       },
     }),
   }),
