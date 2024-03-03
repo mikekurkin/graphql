@@ -18,14 +18,13 @@ export const ProfileType = new GraphQLObjectType({
     memberTypeId: { type: new GraphQLNonNull(GraphQLString) },
     memberType: {
       type: MemberTypeType,
-      resolve: (profile, _args, { db }) =>
-        db.memberType.findUnique({ where: { id: profile.memberTypeId } }),
+      resolve: ({ memberTypeId }, _args, { loaders }) =>
+        loaders.memberType.load(memberTypeId),
     },
     userId: { type: new GraphQLNonNull(UUIDType) },
     user: {
       type: UserType,
-      resolve: (profile, _args, { db }) =>
-        db.user.findUnique({ where: { id: profile.userId } }),
+      resolve: ({ userId }, _args, { loaders }) => loaders.user.load(userId),
     },
   }),
 });

@@ -11,8 +11,7 @@ export const PostType = new GraphQLObjectType({
     authorId: { type: new GraphQLNonNull(UUIDType) },
     author: {
       type: UserType,
-      resolve: (post, _args, { db }) =>
-        db.user.findUnique({ where: { id: post.authorId } }),
+      resolve: ({ authorId }, _args, { loaders }) => loaders.users.load(authorId),
     },
   }),
 });

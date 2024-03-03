@@ -17,27 +17,21 @@ export const UserType = new GraphQLObjectType({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
     profile: {
       type: ProfileType,
-      resolve: (user, _args, { db }) =>
-        db.profile.findUnique({ where: { userId: user.id } }),
+      resolve: ({ id: userId }, _args, { loaders }) =>
+        loaders.profileByUserId.load(userId),
     },
     posts: {
       type: new GraphQLList(PostType),
-      resolve: (user, _args, { db }) =>
-        db.post.findMany({ where: { authorId: user.id } }),
+      resolve: ({ id: authorId }, _args, { loaders }) =>
+        loaders.postsByAuthorId.load(authorId),
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: (user, _args, { db }) =>
-        db.user.findMany({
-          where: { subscribedToUser: { some: { subscriberId: user.id } } },
-        }),
+      resolve: ({ id }, _args, { loaders }) => loaders.userSubscribedToByUserId.load(id),
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: (user, _args, { db }) =>
-        db.user.findMany({
-          where: { userSubscribedTo: { some: { authorId: user.id } } },
-        }),
+      resolve: ({ id }, _args, { loaders }) => loaders.subscribedToUserByUserId.load(id),
     },
   }),
 });

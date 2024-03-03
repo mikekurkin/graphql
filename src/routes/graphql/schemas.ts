@@ -6,6 +6,7 @@ import {
   GraphQLSchema,
   GraphQLString,
 } from 'graphql';
+import { parseResolveInfo } from 'graphql-parse-resolve-info';
 import { ChangePostInput, CreatePostInput } from './inputs/post.js';
 import { ChangeProfileInput, CreateProfileInput } from './inputs/profile.js';
 import { ChangeUserInput, CreateUserInput } from './inputs/user.js';
@@ -42,38 +43,46 @@ export const schema = new GraphQLSchema({
       user: {
         type: UserType,
         args: { id: { type: new GraphQLNonNull(UUIDType) } },
-        resolve: (_obj, { id }, { db }) => db.user.findUnique({ where: { id } }),
+        resolve: (_obj, { id }, { loaders }) => loaders.user.load(id),
       },
       users: {
         type: new GraphQLList(UserType),
-        resolve: (_obj, _args, { db }) => db.user.findMany(),
+        resolve: (_obj, _args, { loaders }, info) => {
+          const include = {};
+          ['subscribedToUser', 'userSubscribedTo'].forEach(
+            (field) =>
+              (include[field] =
+                parseResolveInfo(info)?.fieldsByTypeName.User[field] !== undefined),
+          );
+          return loaders.users.load({ include });
+        },
       },
       profile: {
         type: ProfileType,
         args: { id: { type: new GraphQLNonNull(UUIDType) } },
-        resolve: (_obj, { id }, { db }) => db.profile.findUnique({ where: { id } }),
+        resolve: (_obj, { id }, { loaders }) => loaders.profile.load(id),
       },
       profiles: {
         type: new GraphQLList(ProfileType),
-        resolve: (_obj, _args, { db }) => db.profile.findMany(),
+        resolve: (_obj, _args, { loaders }) => loaders.profiles.load(),
       },
       memberType: {
         type: MemberTypeType,
         args: { id: { type: new GraphQLNonNull(MemberTypeIdType) } },
-        resolve: (_obj, { id }, { db }) => db.memberType.findUnique({ where: { id } }),
+        resolve: (_obj, { id }, { loaders }) => loaders.memberType.load(id),
       },
       memberTypes: {
         type: new GraphQLList(MemberTypeType),
-        resolve: (_obj, _args, { db }) => db.memberType.findMany(),
+        resolve: (_obj, _args, { loaders }) => loaders.memberTypes.load(),
       },
       post: {
         type: PostType,
         args: { id: { type: new GraphQLNonNull(UUIDType) } },
-        resolve: (_obj, { id }, { db }) => db.post.findUnique({ where: { id } }),
+        resolve: (_obj, { id }, { loaders }) => loaders.post.load(id),
       },
       posts: {
         type: new GraphQLList(PostType),
-        resolve: (_obj, _args, { db }) => db.post.findMany(),
+        resolve: (_obj, _args, { loaders }) => loaders.posts.load(),
       },
     }),
   }),
